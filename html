@@ -1,53 +1,74 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Vocab Genius v2 - Band 8.5+</title>
+    <title>IELTS Vocab Mastery - Band 8.5+</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --accent: #dc2626; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; color: #1e293b; }
-        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 1rem; font-weight: 600; transition: 0.2s; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --success: #059669; --error: #dc2626; --text: #1e293b; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; color: var(--text); }
+        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        h2 { margin-top: 0; color: var(--primary); }
+        button { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 1rem; font-weight: 600; width: 100%; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
         button:active { transform: scale(0.98); }
-        input[type="text"], input[type="number"] { width: 85%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; outline: none; }
+        .btn-secondary { background: #64748b; margin-top: 5px; }
+        input[type="text"], input[type="number"] { width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; outline: none; text-align: center; }
         input:focus { border-color: var(--primary); }
         .hidden { display: none; }
-        .meaning { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; }
-        .phonetic { font-family: 'Arial'; color: var(--accent); font-size: 1.1rem; margin-bottom: 1rem; }
-        .example { font-style: italic; color: #64748b; margin-top: 15px; font-size: 0.95rem; border-top: 1px solid #f1f5f9; padding-top: 10px; }
-        .status { margin-top: 20px; font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
-        #feedback { font-weight: bold; margin-top: 10px; min-height: 24px; }
+        
+        /* Question Area */
+        .type-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
+        .meaning-q { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+        
+        /* Review Area */
+        #review-area { margin-top: 20px; padding-top: 20px; border-top: 2px solid #f1f5f9; text-align: left; animation: fadeIn 0.3s ease; }
+        .review-word { font-size: 1.8rem; font-weight: 800; color: var(--primary); display: block; text-align: center; }
+        .review-phonetic { font-size: 1.1rem; color: var(--error); text-align: center; display: block; margin-bottom: 15px; }
+        .review-item { margin-bottom: 10px; font-size: 0.95rem; }
+        .review-label { font-weight: 700; color: #64748b; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .status { margin-top: 20px; font-size: 0.85rem; color: #94a3b8; }
+        #feedback { font-weight: 800; font-size: 1.2rem; margin: 10px 0; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="card">
         <h2>🚀 IELTS Vocab Pro</h2>
-        <p>Tải file Excel (Word, Phonetic, Meaning...)</p>
-        <input type="file" id="upload" accept=".xlsx, .xls" /><br><br>
+        <p>Step 1: Upload your Excel file</p>
+        <input type="file" id="upload" accept=".xlsx, .xls" />
         <div id="config" class="hidden">
-            <label>Số từ muốn học hôm nay:</label><br>
+            <p>Step 2: How many words for today?</p>
             <input type="number" id="total-to-learn" value="20" min="1">
-            <br>
-            <button onclick="startSession()">Bắt đầu học ngay</button>
+            <button onclick="startSession()">START LEARNING</button>
         </div>
     </div>
 
     <div id="study-screen" class="card hidden">
-        <div id="exercise-type" style="color: var(--primary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;"></div>
-        <div id="question-area">
-            <div class="meaning" id="display-meaning"></div>
-            <div class="phonetic" id="display-phonetic"></div>
-            <button id="btn-audio" onclick="playAudio()">🔊 Nghe âm thanh</button>
-            <br>
-            <input type="text" id="user-input" placeholder="Gõ từ tại đây..." autocomplete="off" spellcheck="false">
-            <br>
-            <button onclick="checkAnswer()">Kiểm tra (Enter)</button>
-            <div id="feedback"></div>
-            <div class="example" id="display-example"></div>
+        <div id="exercise-type" class="type-label"></div>
+        
+        <div id="question-phase">
+            <div class="meaning-q" id="display-meaning-q"></div>
+            <button id="btn-audio" class="btn-secondary" onclick="playAudio()">🔊 LISTEN</button>
+            <input type="text" id="user-input" placeholder="Type answer here..." autocomplete="off" spellcheck="false">
+            <button id="btn-check" onclick="checkAnswer()">CHECK ANSWER</button>
         </div>
+
+        <div id="review-area" class="hidden">
+            <div id="feedback"></div>
+            <span class="review-word" id="rev-word"></span>
+            <span class="review-phonetic" id="rev-phonetic"></span>
+            
+            <div class="review-item"><span class="review-label">Definition:</span> <span id="rev-meaning"></span></div>
+            <div class="review-item"><span class="review-label">Example:</span> <span id="rev-example"></span></div>
+            <div class="review-item"><span class="review-label">Synonyms:</span> <span id="rev-synonyms"></span></div>
+            
+            <button id="btn-continue" onclick="continueNext()" style="background: var(--success);">CONTINUE (Enter)</button>
+        </div>
+
         <div class="status" id="progress-text"></div>
     </div>
 
@@ -55,8 +76,9 @@
         let allWords = [];
         let sessionWords = [];
         let currentQueue = [];
-        let sessionTotal = 0;
+        let isReviewMode = false;
 
+        // 1. Handle File Upload
         document.getElementById('upload').addEventListener('change', function(e) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -69,10 +91,11 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
+        // 2. Start Session
         function startSession() {
-            sessionTotal = Math.min(parseInt(document.getElementById('total-to-learn').value), allWords.length);
+            let limit = parseInt(document.getElementById('total-to-learn').value);
             let shuffled = [...allWords].sort(() => 0.5 - Math.random());
-            sessionWords = shuffled.slice(0, sessionTotal);
+            sessionWords = shuffled.slice(0, Math.min(limit, allWords.length));
             
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('study-screen').classList.remove('hidden');
@@ -80,73 +103,100 @@
             loadNextSet();
         }
 
+        // 3. Load 10 words into the active queue
         function loadNextSet() {
             if (sessionWords.length === 0 && currentQueue.length === 0) {
-                alert("Hoàn thành mục tiêu! Tuyệt vời!");
+                alert("Great job! You have finished your goal for today.");
                 location.reload();
                 return;
             }
             if (currentQueue.length === 0) {
-                currentQueue = sessionWords.splice(0, 10).map(w => ({...w, type: Math.random() > 0.5 ? 'audio' : 'meaning'}));
+                currentQueue = sessionWords.splice(0, 10).map(w => ({
+                    ...w, 
+                    qType: Math.random() > 0.5 ? 'audio' : 'meaning'
+                }));
             }
-            nextQuestion();
+            showQuestion();
         }
 
-        function nextQuestion() {
-            if (currentQueue.length === 0) { loadNextSet(); return; }
-            
+        // 4. Show Question
+        function showQuestion() {
+            isReviewMode = false;
             let current = currentQueue[0];
-            document.getElementById('user-input').value = "";
-            document.getElementById('feedback').innerText = "";
-            document.getElementById('display-meaning').innerText = current.meaning;
-            document.getElementById('display-phonetic').innerText = current.phonetic || "";
-            document.getElementById('display-example').innerText = `Context: ${current.example || ''}`;
             
-            if (current.type === 'audio') {
-                document.getElementById('exercise-type').innerText = "🎧 LISTENING EXERCISE";
-                document.getElementById('display-meaning').classList.add('hidden');
-                document.getElementById('display-phonetic').classList.add('hidden');
+            document.getElementById('question-phase').classList.remove('hidden');
+            document.getElementById('review-area').classList.add('hidden');
+            document.getElementById('user-input').value = "";
+            document.getElementById('user-input').disabled = false;
+            document.getElementById('user-input').focus();
+            
+            if (current.qType === 'audio') {
+                document.getElementById('exercise-type').innerText = "🎧 Listening Task";
+                document.getElementById('display-meaning-q').innerText = "???";
                 playAudio();
             } else {
-                document.getElementById('exercise-type').innerText = "📖 READING EXERCISE";
-                document.getElementById('display-meaning').classList.remove('hidden');
-                document.getElementById('display-phonetic').classList.remove('hidden');
+                document.getElementById('exercise-type').innerText = "📖 Reading Task";
+                document.getElementById('display-meaning-q').innerText = current.meaning;
             }
-            document.getElementById('progress-text').innerText = `Còn lại trong lượt này: ${currentQueue.length} từ`;
+            
+            document.getElementById('progress-text').innerText = `Remaining in this set: ${currentQueue.length}`;
         }
 
         function playAudio() {
-            if (currentQueue.length > 0) {
-                window.speechSynthesis.cancel();
-                let msg = new SpeechSynthesisUtterance(currentQueue[0].word);
-                msg.lang = 'en-US';
-                msg.rate = 0.9;
-                window.speechSynthesis.speak(msg);
-            }
+            window.speechSynthesis.cancel();
+            let msg = new SpeechSynthesisUtterance(currentQueue[0].word);
+            msg.lang = 'en-US';
+            msg.rate = 0.85;
+            window.speechSynthesis.speak(msg);
         }
 
+        // 5. Check Answer & Reveal Details
         function checkAnswer() {
+            let current = currentQueue[0];
             let userAns = document.getElementById('user-input').value.trim().toLowerCase();
-            let correctAns = currentQueue[0].word.toLowerCase();
+            let correctAns = current.word.toLowerCase();
             let feedback = document.getElementById('feedback');
             
+            isReviewMode = true;
+            document.getElementById('user-input').disabled = true;
+            document.getElementById('review-area').classList.remove('hidden');
+            
+            // Show all details
+            document.getElementById('rev-word').innerText = current.word;
+            document.getElementById('rev-phonetic').innerText = current.phonetic || "";
+            document.getElementById('rev-meaning').innerText = current.meaning;
+            document.getElementById('rev-example').innerText = current.example || "No example provided.";
+            document.getElementById('rev-synonyms').innerText = current.synonyms || "N/A";
+
             if (userAns === correctAns) {
-                feedback.innerText = "✅ Excellent!";
-                feedback.style.color = "#059669";
-                setTimeout(() => {
-                    currentQueue.shift();
-                    nextQuestion();
-                }, 800);
+                feedback.innerText = "✅ CORRECT!";
+                feedback.style.color = "var(--success)";
+                current.isCorrect = true;
             } else {
-                feedback.innerText = `❌ WRONG! It is: ${currentQueue[0].word}`;
-                feedback.style.color = "#dc2626";
-                let wrongWord = currentQueue.shift();
-                currentQueue.push(wrongWord);
-                setTimeout(nextQuestion, 2500);
+                feedback.innerText = "❌ INCORRECT!";
+                feedback.style.color = "var(--error)";
+                current.isCorrect = false;
             }
+            
+            document.getElementById('btn-continue').focus();
         }
 
-        document.getElementById('user-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
+        // 6. Continue to Next
+        function continueNext() {
+            let lastWord = currentQueue.shift();
+            if (!lastWord.isCorrect) {
+                currentQueue.push(lastWord); // Put back to the end if wrong
+            }
+            loadNextSet();
+        }
+
+        // Handle Enter Key
+        document.getElementById('user-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !isReviewMode) checkAnswer();
+        });
+        window.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && isReviewMode) continueNext();
+        });
     </script>
 </body>
 </html>
