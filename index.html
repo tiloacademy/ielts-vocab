@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Mastery Pro v6</title>
+    <title>IELTS Mastery v7 - Global History</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f1f5f9; --success: #059669; --error: #dc2626; --text: #0f172a; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        .menu-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 15px; border-radius: 12px; cursor: pointer; margin: 10px 0; font-size: 1.1rem; font-weight: 700; width: 100%; transition: 0.3s; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --success: #059669; --error: #dc2626; --text: #1e293b; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; color: var(--text); }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        .menu-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 15px; border-radius: 12px; cursor: pointer; margin: 10px 0; font-size: 1rem; font-weight: 700; width: 100%; transition: 0.3s; }
         .menu-btn:hover { background: var(--primary); color: white; }
         .action-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
-        .secondary-btn { background: #64748b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 10px; width: 100%; }
-        input[type="text"], input[type="number"] { width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; text-align: center; outline: none; }
+        input { width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; text-align: center; }
         .hidden { display: none; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; margin-bottom: 15px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; margin-bottom: 10px; }
         .badge-new { background: #dcfce7; color: #166534; }
         .badge-review { background: #fef9c3; color: #854d0e; }
         #review-area { text-align: left; border-top: 2px solid #f1f5f9; margin-top: 20px; padding-top: 20px; }
@@ -24,187 +23,205 @@
 <body>
 
     <div id="home-screen" class="card">
-        <h1 style="color:var(--primary); margin-bottom:5px;">IELTS MASTERY</h1>
-        <p style="color:#64748b; margin-bottom:30px;">Choose your action</p>
-        <button class="menu-btn" onclick="showScreen('upload-screen')">📥 UPDATE VOCABULARY</button>
-        <button class="menu-btn" onclick="showScreen('setup-study-screen')" id="main-study-btn">📖 START LEARNING</button>
-        <div id="database-info" style="margin-top:20px; font-size:0.8rem; color:#94a3b8;">Loading database...</div>
+        <h1 style="color:var(--primary);">IELTS VOCAB</h1>
+        <p style="color:#64748b; font-size:0.9rem;">Master vocabulary across all sessions</p>
+        
+        <button class="menu-btn" onclick="showScreen('upload-screen')">📥 UPLOAD NEW WORDS</button>
+        <button class="menu-btn" onclick="showScreen('setup-screen')">📖 START LEARNING</button>
+        
+        <div id="status-bar" style="margin-top:20px; font-size:0.8rem; background:#f1f5f9; padding:10px; border-radius:10px;">
+            Loading your progress...
+        </div>
+        <button onclick="clearHistory()" style="background:none; border:none; color:#cbd5e1; font-size:0.7rem; margin-top:15px; cursor:pointer;">Reset All Progress</button>
     </div>
 
     <div id="upload-screen" class="card hidden">
-        <h2>Update Database</h2>
-        <p style="font-size:0.9rem; color:#64748b;">Upload Excel. Only new words will be added.</p>
-        <input type="file" id="upload-input" accept=".xlsx, .xls" />
-        <div id="upload-feedback" style="margin:15px 0; font-weight:bold;"></div>
-        <button class="secondary-btn" onclick="showScreen('home-screen')">BACK TO MENU</button>
+        <h2>Update Master List</h2>
+        <input type="file" id="file-input" accept=".xlsx, .xls" />
+        <p id="upload-msg" style="font-size:0.8rem; color:var(--success); font-weight:bold;"></p>
+        <button class="action-btn" onclick="showScreen('home-screen')">BACK TO MENU</button>
     </div>
 
-    <div id="setup-study-screen" class="card hidden">
-        <h2>Session Config</h2>
-        <p>How many words do you want to master?</p>
-        <input type="number" id="study-count" value="10" min="1">
-        <button class="action-btn" onclick="initiateStudy()">GO!</button>
-        <button class="secondary-btn" onclick="showScreen('home-screen')">BACK</button>
+    <div id="setup-screen" class="card hidden">
+        <h2>Session Setup</h2>
+        <p>Target words for this session:</p>
+        <input type="number" id="session-count" value="10" min="1">
+        <button class="action-btn" onclick="startStudy()">GO</button>
+        <button class="action-btn" style="background:#64748b;" onclick="showScreen('home-screen')">CANCEL</button>
     </div>
 
     <div id="study-screen" class="card hidden">
-        <div id="word-badge"></div>
-        <div id="question-area">
-            <div id="q-type" style="font-size:0.7rem; font-weight:bold; color:#94a3b8; text-transform:uppercase;"></div>
-            <div id="q-display" style="font-size:1.6rem; font-weight:800; margin:15px 0;"></div>
-            <button class="secondary-btn" onclick="playAudio()">🔊 PLAY AUDIO</button>
-            <input type="text" id="user-input" placeholder="Type answer..." autocomplete="off">
-            <button class="action-btn" onclick="checkAnswer()">CHECK</button>
+        <div id="type-badge"></div>
+        <div id="q-area">
+            <div id="q-label" style="font-size:0.7rem; color:#94a3b8; font-weight:bold; text-transform:uppercase;"></div>
+            <div id="q-text" style="font-size:1.5rem; font-weight:800; margin:15px 0;"></div>
+            <button class="action-btn" style="background:#64748b; margin-bottom:10px;" onclick="playAudio()">🔊 HEAR WORD</button>
+            <input type="text" id="answer-input" placeholder="Type here..." autocomplete="off">
+            <button class="action-btn" onclick="checkAnswer()">CHECK ANSWER</button>
         </div>
+        
         <div id="review-area" class="hidden">
-            <div id="feedback" style="text-align:center; font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
+            <div id="feedback-msg" style="text-align:center; font-weight:bold; margin-bottom:10px;"></div>
             <div style="text-align:center;">
-                <span id="rev-word" style="font-size:1.8rem; font-weight:900; color:var(--primary);"></span>
-                <span id="rev-phonetic" style="display:block; color:var(--error); margin-bottom:15px;"></span>
+                <span id="res-word" style="font-size:1.6rem; font-weight:900; color:var(--primary);"></span>
+                <span id="res-phonetic" style="display:block; color:var(--error); margin-bottom:10px;"></span>
             </div>
-            <p><strong>Definition:</strong> <span id="rev-meaning"></span></p>
-            <p><strong>Example:</strong> <span id="rev-example"></span></p>
-            <p><strong>Synonyms:</strong> <span id="rev-synonyms"></span></p>
-            <button class="action-btn" id="btn-continue" onclick="nextQuestion()" style="background:var(--success);">CONTINUE (Enter)</button>
+            <p><strong>Meaning:</strong> <span id="res-meaning"></span></p>
+            <p><strong>Example:</strong> <span id="res-example"></span></p>
+            <p><strong>Synonyms:</strong> <span id="res-synonyms"></span></p>
+            <button class="action-btn" id="continue-btn" onclick="handleContinue()" style="background:var(--success);">CONTINUE (Enter)</button>
         </div>
     </div>
 
     <script>
-        const DB_KEY = 'ielts_master_db';
-        const HIST_KEY = 'ielts_mastery_history';
+        const STORAGE_DB = 'ielts_master_list';
+        const STORAGE_HIST = 'ielts_mastery_global_history';
         let currentQueue = [];
-        let isReviewMode = false;
+        let isReviewing = false;
 
-        // Initialize & UI Navigation
-        function showScreen(screenId) {
+        function showScreen(id) {
             document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-            updateStats();
+            document.getElementById(id).classList.remove('hidden');
+            updateHomeStats();
         }
 
-        function updateStats() {
-            let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
-            let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
-            document.getElementById('database-info').innerText = `Total Words: ${db.length} | Mastered: ${Object.keys(hist).length}`;
+        function updateHomeStats() {
+            let db = JSON.parse(localStorage.getItem(STORAGE_DB) || "[]");
+            let hist = JSON.parse(localStorage.getItem(STORAGE_HIST) || "[]");
+            document.getElementById('status-bar').innerHTML = `
+                <b>Global Progress</b><br>
+                Total words in Library: ${db.length}<br>
+                Words mastered since day 1: ${hist.length}
+            `;
         }
-        updateStats();
+        updateHomeStats();
 
-        // LOGIC 1: SMART UPDATE
-        document.getElementById('upload-input').addEventListener('change', function(e) {
+        // LOGIC: UPLOAD & MERGE
+        document.getElementById('file-input').addEventListener('change', function(e) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const newWords = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                const incoming = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 
-                let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
+                let db = JSON.parse(localStorage.getItem(STORAGE_DB) || "[]");
                 let existingWords = db.map(i => i.word.toLowerCase());
                 
-                let addedCount = 0;
-                newWords.forEach(item => {
+                let added = 0;
+                incoming.forEach(item => {
                     if (item.word && !existingWords.includes(item.word.toLowerCase())) {
                         db.push(item);
-                        addedCount++;
+                        added++;
                     }
                 });
-
-                localStorage.setItem(DB_KEY, JSON.stringify(db));
-                document.getElementById('upload-feedback').innerText = `✅ Success! Added ${addedCount} new words.`;
-                updateStats();
+                localStorage.setItem(STORAGE_DB, JSON.stringify(db));
+                document.getElementById('upload-msg').innerText = `Done! Added ${added} new words to library.`;
+                updateHomeStats();
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        // LOGIC 2: SMART STUDY MIX
-        function initiateStudy() {
-            let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
-            if (db.length === 0) { alert("Please upload vocabulary first!"); return; }
+        // LOGIC: SMART GLOBAL SESSION
+        function startStudy() {
+            let db = JSON.parse(localStorage.getItem(STORAGE_DB) || "[]");
+            if (db.length === 0) { alert("Upload words first!"); return; }
 
-            let limit = parseInt(document.getElementById('study-count').value);
-            let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
+            let hist = JSON.parse(localStorage.getItem(STORAGE_HIST) || "[]");
+            let limit = parseInt(document.getElementById('session-count').value);
 
-            // Separate pools
-            let newPool = db.filter(w => !hist[w.word.toLowerCase()]);
-            let oldPool = db.filter(w => hist[w.word.toLowerCase()]);
+            // Separate Global Pools
+            let newPool = db.filter(w => !hist.includes(w.word.toLowerCase()));
+            let reviewPool = db.filter(w => hist.includes(w.word.toLowerCase()));
 
-            // 70/30 Mix
-            let nSize = Math.ceil(limit * 0.7);
-            let oSize = limit - nSize;
+            // Mix Logic: 70% New from library, 30% Randomly picked from past history
+            let newCount = Math.ceil(limit * 0.7);
+            let revCount = limit - newCount;
 
-            let selected = [
-                ...newPool.sort(() => 0.5 - Math.random()).slice(0, nSize),
-                ...oldPool.sort(() => 0.5 - Math.random()).slice(0, oSize)
-            ].sort(() => 0.5 - Math.random());
+            let selectedNew = newPool.sort(() => 0.5 - Math.random()).slice(0, newCount);
+            let selectedRev = reviewPool.sort(() => 0.5 - Math.random()).slice(0, revCount);
 
-            currentQueue = selected.map(w => ({
+            // If not enough new words, fill with more reviews, and vice versa
+            let finalSelection = [...selectedNew, ...selectedRev];
+            if (finalSelection.length < limit) {
+                let remaining = db.filter(w => !finalSelection.find(f => f.word === w.word))
+                                  .sort(() => 0.5 - Math.random()).slice(0, limit - finalSelection.length);
+                finalSelection = [...finalSelection, ...remaining];
+            }
+
+            currentQueue = finalSelection.sort(() => 0.5 - Math.random()).map(w => ({
                 ...w,
-                isNew: !hist[w.word.toLowerCase()],
+                isNewType: !hist.includes(w.word.toLowerCase()),
                 qType: Math.random() > 0.5 ? 'audio' : 'meaning'
             }));
 
             showScreen('study-screen');
-            showQuestion();
+            renderQuestion();
         }
 
-        function showQuestion() {
-            isReviewMode = false;
+        function renderQuestion() {
+            isReviewing = false;
             let current = currentQueue[0];
-            document.getElementById('question-area').classList.remove('hidden');
+            document.getElementById('q-area').classList.remove('hidden');
             document.getElementById('review-area').classList.add('hidden');
-            document.getElementById('user-input').value = ""; document.getElementById('user-input').disabled = false;
-            document.getElementById('user-input').focus();
+            document.getElementById('answer-input').value = "";
+            document.getElementById('answer-input').disabled = false;
+            document.getElementById('answer-input').focus();
 
-            document.getElementById('word-badge').innerHTML = current.isNew ? 
-                '<span class="badge badge-new">✨ NEW WORD</span>' : '<span class="badge badge-review">🔄 REVIEW</span>';
+            document.getElementById('type-badge').innerHTML = current.isNewType ? 
+                '<span class="badge badge-new">✨ LEARNING NEW</span>' : '<span class="badge badge-review">🔄 GLOBAL REVIEW</span>';
             
             if (current.qType === 'audio') {
-                document.getElementById('q-type').innerText = "Listening Task";
-                document.getElementById('q-display').innerText = "???";
+                document.getElementById('q-label').innerText = "Listen and Type";
+                document.getElementById('q-text').innerText = "???";
                 playAudio();
             } else {
-                document.getElementById('q-type').innerText = "Reading Task";
-                document.getElementById('q-display').innerText = current.meaning;
+                document.getElementById('q-label').innerText = "Definition to Word";
+                document.getElementById('q-text').innerText = current.meaning;
             }
         }
 
         function checkAnswer() {
             let current = currentQueue[0];
-            let userAns = document.getElementById('user-input').value.trim().toLowerCase();
-            let correctAns = current.word.toLowerCase();
-            isReviewMode = true;
+            let input = document.getElementById('answer-input').value.trim().toLowerCase();
+            let correct = current.word.toLowerCase();
+            isReviewing = true;
 
-            document.getElementById('question-area').classList.add('hidden');
+            document.getElementById('q-area').classList.add('hidden');
             document.getElementById('review-area').classList.remove('hidden');
             
-            document.getElementById('rev-word').innerText = current.word;
-            document.getElementById('rev-phonetic').innerText = current.phonetic || "";
-            document.getElementById('rev-meaning').innerText = current.meaning;
-            document.getElementById('rev-example').innerText = current.example || "";
-            document.getElementById('rev-synonyms').innerText = current.synonyms || "";
+            document.getElementById('res-word').innerText = current.word;
+            document.getElementById('res-phonetic').innerText = current.phonetic || "";
+            document.getElementById('res-meaning').innerText = current.meaning;
+            document.getElementById('res-example').innerText = current.example || "";
+            document.getElementById('res-synonyms').innerText = current.synonyms || "";
 
-            let feedback = document.getElementById('feedback');
-            if (userAns === correctAns) {
-                feedback.innerText = "✅ EXCELLENT!"; feedback.style.color = "var(--success)";
+            let feedback = document.getElementById('feedback-msg');
+            if (input === correct) {
+                feedback.innerText = "EXCELLENT! ✅"; feedback.style.color = "var(--success)";
                 current.isCorrect = true;
-                markMastered(current.word);
+                saveToGlobalHistory(current.word);
             } else {
-                feedback.innerText = "❌ WRONG!"; feedback.style.color = "var(--error)";
+                feedback.innerText = "KEEP TRYING! ❌"; feedback.style.color = "var(--error)";
                 current.isCorrect = false;
             }
-            document.getElementById('btn-continue').focus();
+            document.getElementById('continue-btn').focus();
         }
 
-        function nextQuestion() {
+        function saveToGlobalHistory(word) {
+            let hist = JSON.parse(localStorage.getItem(STORAGE_HIST) || "[]");
+            if (!hist.includes(word.toLowerCase())) {
+                hist.push(word.toLowerCase());
+                localStorage.setItem(STORAGE_HIST, JSON.stringify(hist));
+            }
+        }
+
+        function handleContinue() {
             let last = currentQueue.shift();
-            if (!last.isCorrect) currentQueue.push(last);
-            if (currentQueue.length === 0) { alert("Session Complete!"); showScreen('home-screen'); }
-            else { showQuestion(); }
-        }
-
-        function markMastered(word) {
-            let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
-            hist[word.toLowerCase()] = true;
-            localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+            if (!last.isCorrect) currentQueue.push(last); // Repeat failed words
+            if (currentQueue.length === 0) { 
+                alert("Session Finished!"); showScreen('home-screen'); 
+            } else { 
+                renderQuestion(); 
+            }
         }
 
         function playAudio() {
@@ -213,8 +230,14 @@
             msg.lang = 'en-US'; msg.rate = 0.85; window.speechSynthesis.speak(msg);
         }
 
-        document.getElementById('user-input').addEventListener('keypress', (e) => { if(e.key==='Enter' && !isReviewMode) checkAnswer(); });
-        window.addEventListener('keypress', (e) => { if(e.key==='Enter' && isReviewMode) nextQuestion(); });
+        function clearHistory() {
+            if(confirm("This will erase all learned progress and your library. Continue?")) {
+                localStorage.clear(); location.reload();
+            }
+        }
+
+        document.getElementById('answer-input').addEventListener('keypress', (e) => { if(e.key==='Enter' && !isReviewing) checkAnswer(); });
+        window.addEventListener('keypress', (e) => { if(e.key==='Enter' && isReviewing) handleContinue(); });
     </script>
 </body>
 </html>
