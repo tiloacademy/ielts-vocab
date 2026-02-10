@@ -3,151 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Master v5 - Spaced Repetition</title>
+    <title>IELTS Mastery Pro v6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --success: #059669; --error: #dc2626; --text: #1e293b; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; color: var(--text); }
-        .card { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 1rem; font-weight: 600; width: 100%; }
-        .btn-secondary { background: #64748b; margin-top: 5px; }
-        input[type="text"], input[type="number"] { width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; text-align: center; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --success: #059669; --error: #dc2626; --text: #0f172a; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        .menu-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 15px; border-radius: 12px; cursor: pointer; margin: 10px 0; font-size: 1.1rem; font-weight: 700; width: 100%; transition: 0.3s; }
+        .menu-btn:hover { background: var(--primary); color: white; }
+        .action-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
+        .secondary-btn { background: #64748b; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 10px; width: 100%; }
+        input[type="text"], input[type="number"] { width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; text-align: center; outline: none; }
         .hidden { display: none; }
-        .review-word { font-size: 1.8rem; font-weight: 800; color: var(--primary); display: block; text-align: center; }
-        .review-phonetic { font-size: 1.1rem; color: var(--error); text-align: center; display: block; margin-bottom: 15px; }
-        .mode-box { background: #eff6ff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #dbeafe; font-size: 0.9rem; text-align: left; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; margin-bottom: 15px; }
         .badge-new { background: #dcfce7; color: #166534; }
         .badge-review { background: #fef9c3; color: #854d0e; }
+        #review-area { text-align: left; border-top: 2px solid #f1f5f9; margin-top: 20px; padding-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="setup-screen" class="card">
-        <h2>🚀 IELTS Smart Review</h2>
-        <p>Upload your Master Excel file</p>
-        <input type="file" id="upload" accept=".xlsx, .xls" />
-        
-        <div id="config" class="hidden">
-            <div class="mode-box">
-                <strong>Learning Strategy:</strong><br>
-                <span>✨ 70% New Words + 30% Random Review</span>
-                <div id="stats" style="margin-top:10px; font-size:0.8rem; color:#64748b;"></div>
-            </div>
-            <p>Number of words to study:</p>
-            <input type="number" id="total-to-learn" value="10" min="1">
-            <button onclick="startSession()">START SESSION</button>
-            <button class="btn-secondary" onclick="resetHistory()" style="font-size: 0.7rem;">Clear All History</button>
-        </div>
+    <div id="home-screen" class="card">
+        <h1 style="color:var(--primary); margin-bottom:5px;">IELTS MASTERY</h1>
+        <p style="color:#64748b; margin-bottom:30px;">Choose your action</p>
+        <button class="menu-btn" onclick="showScreen('upload-screen')">📥 UPDATE VOCABULARY</button>
+        <button class="menu-btn" onclick="showScreen('setup-study-screen')" id="main-study-btn">📖 START LEARNING</button>
+        <div id="database-info" style="margin-top:20px; font-size:0.8rem; color:#94a3b8;">Loading database...</div>
+    </div>
+
+    <div id="upload-screen" class="card hidden">
+        <h2>Update Database</h2>
+        <p style="font-size:0.9rem; color:#64748b;">Upload Excel. Only new words will be added.</p>
+        <input type="file" id="upload-input" accept=".xlsx, .xls" />
+        <div id="upload-feedback" style="margin:15px 0; font-weight:bold;"></div>
+        <button class="secondary-btn" onclick="showScreen('home-screen')">BACK TO MENU</button>
+    </div>
+
+    <div id="setup-study-screen" class="card hidden">
+        <h2>Session Config</h2>
+        <p>How many words do you want to master?</p>
+        <input type="number" id="study-count" value="10" min="1">
+        <button class="action-btn" onclick="initiateStudy()">GO!</button>
+        <button class="secondary-btn" onclick="showScreen('home-screen')">BACK</button>
     </div>
 
     <div id="study-screen" class="card hidden">
-        <div id="word-status-badge"></div>
-        <div id="question-phase">
-            <div id="exercise-type" style="font-size:0.7rem; font-weight:bold; color:#94a3b8; text-transform:uppercase;"></div>
-            <div id="display-meaning-q" style="font-size:1.5rem; font-weight:700; margin:15px 0;"></div>
-            <button class="btn-secondary" onclick="playAudio()">🔊 LISTEN</button>
+        <div id="word-badge"></div>
+        <div id="question-area">
+            <div id="q-type" style="font-size:0.7rem; font-weight:bold; color:#94a3b8; text-transform:uppercase;"></div>
+            <div id="q-display" style="font-size:1.6rem; font-weight:800; margin:15px 0;"></div>
+            <button class="secondary-btn" onclick="playAudio()">🔊 PLAY AUDIO</button>
             <input type="text" id="user-input" placeholder="Type answer..." autocomplete="off">
-            <button onclick="checkAnswer()">CHECK</button>
+            <button class="action-btn" onclick="checkAnswer()">CHECK</button>
         </div>
-
-        <div id="review-area" class="hidden" style="text-align:left; border-top:2px solid #f1f5f9; margin-top:20px; padding-top:20px;">
-            <div id="feedback" style="text-align:center; font-weight:bold; font-size:1.2rem; margin-bottom:10px;"></div>
-            <span class="review-word" id="rev-word"></span>
-            <span class="review-phonetic" id="rev-phonetic"></span>
+        <div id="review-area" class="hidden">
+            <div id="feedback" style="text-align:center; font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
+            <div style="text-align:center;">
+                <span id="rev-word" style="font-size:1.8rem; font-weight:900; color:var(--primary);"></span>
+                <span id="rev-phonetic" style="display:block; color:var(--error); margin-bottom:15px;"></span>
+            </div>
             <p><strong>Definition:</strong> <span id="rev-meaning"></span></p>
             <p><strong>Example:</strong> <span id="rev-example"></span></p>
             <p><strong>Synonyms:</strong> <span id="rev-synonyms"></span></p>
-            <button id="btn-continue" onclick="continueNext()" style="background:var(--success);">CONTINUE (Enter)</button>
+            <button class="action-btn" id="btn-continue" onclick="nextQuestion()" style="background:var(--success);">CONTINUE (Enter)</button>
         </div>
     </div>
 
     <script>
-        let masterWords = [];
-        let sessionQueue = [];
+        const DB_KEY = 'ielts_master_db';
+        const HIST_KEY = 'ielts_mastery_history';
+        let currentQueue = [];
         let isReviewMode = false;
-        const HISTORY_KEY = 'ielts_mastery_v5';
 
-        document.getElementById('upload').addEventListener('change', function(e) {
+        // Initialize & UI Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            updateStats();
+        }
+
+        function updateStats() {
+            let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
+            let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
+            document.getElementById('database-info').innerText = `Total Words: ${db.length} | Mastered: ${Object.keys(hist).length}`;
+        }
+        updateStats();
+
+        // LOGIC 1: SMART UPDATE
+        document.getElementById('upload-input').addEventListener('change', function(e) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                masterWords = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                showStats();
-                document.getElementById('config').classList.remove('hidden');
+                const newWords = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
+                let existingWords = db.map(i => i.word.toLowerCase());
+                
+                let addedCount = 0;
+                newWords.forEach(item => {
+                    if (item.word && !existingWords.includes(item.word.toLowerCase())) {
+                        db.push(item);
+                        addedCount++;
+                    }
+                });
+
+                localStorage.setItem(DB_KEY, JSON.stringify(db));
+                document.getElementById('upload-feedback').innerText = `✅ Success! Added ${addedCount} new words.`;
+                updateStats();
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        function showStats() {
-            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "{}");
-            let masteredCount = Object.keys(history).length;
-            document.getElementById('stats').innerText = `Total words in file: ${masterWords.length} | Words you've learned: ${masteredCount}`;
-        }
+        // LOGIC 2: SMART STUDY MIX
+        function initiateStudy() {
+            let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
+            if (db.length === 0) { alert("Please upload vocabulary first!"); return; }
 
-        function startSession() {
-            let limit = parseInt(document.getElementById('total-to-learn').value);
-            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "{}");
-            
-            // 1. Separate New vs Old
-            let newWordsPool = masterWords.filter(w => !history[w.word.toLowerCase()]);
-            let reviewPool = masterWords.filter(w => history[w.word.toLowerCase()]);
+            let limit = parseInt(document.getElementById('study-count').value);
+            let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
 
-            // 2. Calculate Mix (70/30)
-            let newCount = Math.ceil(limit * 0.7);
-            let reviewCount = limit - newCount;
+            // Separate pools
+            let newPool = db.filter(w => !hist[w.word.toLowerCase()]);
+            let oldPool = db.filter(w => hist[w.word.toLowerCase()]);
 
-            let selectedNew = newWordsPool.sort(() => 0.5 - Math.random()).slice(0, newCount);
-            let selectedReview = reviewPool.sort(() => 0.5 - Math.random()).slice(0, reviewCount);
+            // 70/30 Mix
+            let nSize = Math.ceil(limit * 0.7);
+            let oSize = limit - nSize;
 
-            // 3. Final Pool
-            sessionQueue = [...selectedNew, ...selectedReview].sort(() => 0.5 - Math.random()).map(w => ({
+            let selected = [
+                ...newPool.sort(() => 0.5 - Math.random()).slice(0, nSize),
+                ...oldPool.sort(() => 0.5 - Math.random()).slice(0, oSize)
+            ].sort(() => 0.5 - Math.random());
+
+            currentQueue = selected.map(w => ({
                 ...w,
-                isNew: !history[w.word.toLowerCase()],
+                isNew: !hist[w.word.toLowerCase()],
                 qType: Math.random() > 0.5 ? 'audio' : 'meaning'
             }));
 
-            if(sessionQueue.length === 0) { alert("No words found!"); return; }
-
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('study-screen').classList.remove('hidden');
+            showScreen('study-screen');
             showQuestion();
         }
 
         function showQuestion() {
             isReviewMode = false;
-            let current = sessionQueue[0];
-            document.getElementById('question-phase').classList.remove('hidden');
+            let current = currentQueue[0];
+            document.getElementById('question-area').classList.remove('hidden');
             document.getElementById('review-area').classList.add('hidden');
             document.getElementById('user-input').value = ""; document.getElementById('user-input').disabled = false;
             document.getElementById('user-input').focus();
 
-            let badge = document.getElementById('word-status-badge');
-            badge.innerHTML = current.isNew ? '<span class="badge badge-new">✨ NEW WORD</span>' : '<span class="badge badge-review">🔄 REVIEW</span>';
-
+            document.getElementById('word-badge').innerHTML = current.isNew ? 
+                '<span class="badge badge-new">✨ NEW WORD</span>' : '<span class="badge badge-review">🔄 REVIEW</span>';
+            
             if (current.qType === 'audio') {
-                document.getElementById('exercise-type').innerText = "Listening Task";
-                document.getElementById('display-meaning-q').innerText = "???";
+                document.getElementById('q-type').innerText = "Listening Task";
+                document.getElementById('q-display').innerText = "???";
                 playAudio();
             } else {
-                document.getElementById('exercise-type').innerText = "Reading Task";
-                document.getElementById('display-meaning-q').innerText = current.meaning;
+                document.getElementById('q-type').innerText = "Reading Task";
+                document.getElementById('q-display').innerText = current.meaning;
             }
         }
 
-        function playAudio() {
-            window.speechSynthesis.cancel();
-            let msg = new SpeechSynthesisUtterance(sessionQueue[0].word);
-            msg.lang = 'en-US'; msg.rate = 0.85; window.speechSynthesis.speak(msg);
-        }
-
         function checkAnswer() {
-            let current = sessionQueue[0];
+            let current = currentQueue[0];
             let userAns = document.getElementById('user-input').value.trim().toLowerCase();
             let correctAns = current.word.toLowerCase();
             isReviewMode = true;
-            document.getElementById('user-input').disabled = true;
+
+            document.getElementById('question-area').classList.add('hidden');
             document.getElementById('review-area').classList.remove('hidden');
             
             document.getElementById('rev-word').innerText = current.word;
@@ -158,32 +184,37 @@
 
             let feedback = document.getElementById('feedback');
             if (userAns === correctAns) {
-                feedback.innerText = "✅ CORRECT!"; feedback.style.color = "var(--success)";
+                feedback.innerText = "✅ EXCELLENT!"; feedback.style.color = "var(--success)";
                 current.isCorrect = true;
-                markAsLearned(current.word);
+                markMastered(current.word);
             } else {
-                feedback.innerText = "❌ INCORRECT!"; feedback.style.color = "var(--error)";
+                feedback.innerText = "❌ WRONG!"; feedback.style.color = "var(--error)";
                 current.isCorrect = false;
             }
             document.getElementById('btn-continue').focus();
         }
 
-        function markAsLearned(word) {
-            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "{}");
-            history[word.toLowerCase()] = true;
-            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-        }
-
-        function continueNext() {
-            let last = sessionQueue.shift();
-            if (!last.isCorrect) sessionQueue.push(last); // Repeat until correct
-            if (sessionQueue.length === 0) { alert("Session Complete!"); location.reload(); }
+        function nextQuestion() {
+            let last = currentQueue.shift();
+            if (!last.isCorrect) currentQueue.push(last);
+            if (currentQueue.length === 0) { alert("Session Complete!"); showScreen('home-screen'); }
             else { showQuestion(); }
         }
 
-        function resetHistory() { if(confirm("Clear history?")) { localStorage.removeItem(HISTORY_KEY); location.reload(); } }
-        document.getElementById('user-input').addEventListener('keypress', (e) => { if (e.key === 'Enter' && !isReviewMode) checkAnswer(); });
-        window.addEventListener('keypress', (e) => { if (e.key === 'Enter' && isReviewMode) continueNext(); });
+        function markMastered(word) {
+            let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}");
+            hist[word.toLowerCase()] = true;
+            localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+        }
+
+        function playAudio() {
+            window.speechSynthesis.cancel();
+            let msg = new SpeechSynthesisUtterance(currentQueue[0].word);
+            msg.lang = 'en-US'; msg.rate = 0.85; window.speechSynthesis.speak(msg);
+        }
+
+        document.getElementById('user-input').addEventListener('keypress', (e) => { if(e.key==='Enter' && !isReviewMode) checkAnswer(); });
+        window.addEventListener('keypress', (e) => { if(e.key==='Enter' && isReviewMode) nextQuestion(); });
     </script>
 </body>
 </html>
