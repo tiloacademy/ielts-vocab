@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Vocab Genius v2 - Band 8.5+</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --accent: #dc2626; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; color: #1e293b; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 1rem; font-weight: 600; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        input[type="text"], input[type="number"] { width: 85%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 10px 0; font-size: 1.1rem; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .hidden { display: none; }
+        .meaning { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; }
+        .phonetic { font-family: 'Arial'; color: var(--accent); font-size: 1.1rem; margin-bottom: 1rem; }
+        .example { font-style: italic; color: #64748b; margin-top: 15px; font-size: 0.95rem; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+        .status { margin-top: 20px; font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
+        #feedback { font-weight: bold; margin-top: 10px; min-height: 24px; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen" class="card">
+        <h2>🚀 IELTS Vocab Pro</h2>
+        <p>Tải file Excel (Word, Phonetic, Meaning...)</p>
+        <input type="file" id="upload" accept=".xlsx, .xls" /><br><br>
+        <div id="config" class="hidden">
+            <label>Số từ muốn học hôm nay:</label><br>
+            <input type="number" id="total-to-learn" value="20" min="1">
+            <br>
+            <button onclick="startSession()">Bắt đầu học ngay</button>
+        </div>
+    </div>
+
+    <div id="study-screen" class="card hidden">
+        <div id="exercise-type" style="color: var(--primary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;"></div>
+        <div id="question-area">
+            <div class="meaning" id="display-meaning"></div>
+            <div class="phonetic" id="display-phonetic"></div>
+            <button id="btn-audio" onclick="playAudio()">🔊 Nghe âm thanh</button>
+            <br>
+            <input type="text" id="user-input" placeholder="Gõ từ tại đây..." autocomplete="off" spellcheck="false">
+            <br>
+            <button onclick="checkAnswer()">Kiểm tra (Enter)</button>
+            <div id="feedback"></div>
+            <div class="example" id="display-example"></div>
+        </div>
+        <div class="status" id="progress-text"></div>
+    </div>
+
+    <script>
+        let allWords = [];
+        let sessionWords = [];
+        let currentQueue = [];
+        let sessionTotal = 0;
+
+        document.getElementById('upload').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                allWords = XLSX.utils.sheet_to_json(sheet);
+                if(allWords.length > 0) document.getElementById('config').classList.remove('hidden');
+            };
+            reader.readAsArrayBuffer(e.target.files[0]);
+        });
+
+        function startSession() {
+            sessionTotal = Math.min(parseInt(document.getElementById('total-to-learn').value), allWords.length);
+            let shuffled = [...allWords].sort(() => 0.5 - Math.random());
+            sessionWords = shuffled.slice(0, sessionTotal);
+            
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('study-screen').classList.remove('hidden');
+            
+            loadNextSet();
+        }
+
+        function loadNextSet() {
+            if (sessionWords.length === 0 && currentQueue.length === 0) {
+                alert("Hoàn thành mục tiêu! Tuyệt vời!");
+                location.reload();
+                return;
+            }
+            if (currentQueue.length === 0) {
+                currentQueue = sessionWords.splice(0, 10).map(w => ({...w, type: Math.random() > 0.5 ? 'audio' : 'meaning'}));
+            }
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQueue.length === 0) { loadNextSet(); return; }
+            
+            let current = currentQueue[0];
+            document.getElementById('user-input').value = "";
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('display-meaning').innerText = current.meaning;
+            document.getElementById('display-phonetic').innerText = current.phonetic || "";
+            document.getElementById('display-example').innerText = `Context: ${current.example || ''}`;
+            
+            if (current.type === 'audio') {
+                document.getElementById('exercise-type').innerText = "🎧 LISTENING EXERCISE";
+                document.getElementById('display-meaning').classList.add('hidden');
+                document.getElementById('display-phonetic').classList.add('hidden');
+                playAudio();
+            } else {
+                document.getElementById('exercise-type').innerText = "📖 READING EXERCISE";
+                document.getElementById('display-meaning').classList.remove('hidden');
+                document.getElementById('display-phonetic').classList.remove('hidden');
+            }
+            document.getElementById('progress-text').innerText = `Còn lại trong lượt này: ${currentQueue.length} từ`;
+        }
+
+        function playAudio() {
+            if (currentQueue.length > 0) {
+                window.speechSynthesis.cancel();
+                let msg = new SpeechSynthesisUtterance(currentQueue[0].word);
+                msg.lang = 'en-US';
+                msg.rate = 0.9;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        function checkAnswer() {
+            let userAns = document.getElementById('user-input').value.trim().toLowerCase();
+            let correctAns = currentQueue[0].word.toLowerCase();
+            let feedback = document.getElementById('feedback');
+            
+            if (userAns === correctAns) {
+                feedback.innerText = "✅ Excellent!";
+                feedback.style.color = "#059669";
+                setTimeout(() => {
+                    currentQueue.shift();
+                    nextQuestion();
+                }, 800);
+            } else {
+                feedback.innerText = `❌ WRONG! It is: ${currentQueue[0].word}`;
+                feedback.style.color = "#dc2626";
+                let wrongWord = currentQueue.shift();
+                currentQueue.push(wrongWord);
+                setTimeout(nextQuestion, 2500);
+            }
+        }
+
+        document.getElementById('user-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
+    </script>
+</body>
+</html>
