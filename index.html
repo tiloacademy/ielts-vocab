@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Mastery v12 - Library & Search</title>
+    <title>IELTS Mastery v14 - Synonyms Priority</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #2563eb; --bg: #f8fafc; --success: #059669; --error: #dc2626; --text: #1e293b; --secondary-text: #64748b; }
@@ -21,7 +21,7 @@
         
         /* Library Table Styles */
         .table-container { width: 100%; overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; min-width: 700px; }
         th { background: #f8fafc; padding: 12px; border-bottom: 2px solid #e2e8f0; color: var(--secondary-text); }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         tr:hover { background: #f8fafc; }
@@ -32,14 +32,14 @@
         #review-area { text-align: left; border-top: 2px solid #f1f5f9; margin-top: 20px; padding-top: 20px; }
         .review-word { font-size: 1.8rem; font-weight: 900; color: var(--primary); display: inline-block; }
         .review-pos { font-size: 1rem; color: var(--secondary-text); font-style: italic; font-weight: 600; margin-left: 8px; }
-        .review-phonetic { display: block; color: var(--error); font-weight: 600; margin-bottom: 10px; }
+        .review-syn-highlight { color: var(--primary); font-weight: 700; background: #eff6ff; padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div id="home-screen" class="card">
         <h1 style="color:var(--primary); margin-bottom: 5px;">IELTS MASTERY</h1>
-        <p style="color:var(--secondary-text); font-size:0.85rem; margin-bottom: 25px;">Personal Vocabulary Manager</p>
+        <p style="color:var(--secondary-text); font-size:0.85rem; margin-bottom: 25px;">Optimized for Synonyms & POS</p>
         
         <button class="menu-btn" onclick="showScreen('upload-screen')">📥 UPDATE DATABASE</button>
         <button class="menu-btn" onclick="openLibrary()">📚 VOCABULARY LIBRARY</button>
@@ -51,21 +51,20 @@
 
     <div id="library-screen" class="card hidden" style="max-width: 95vw;">
         <h2>Vocabulary Library</h2>
-        <input type="text" id="lib-search" class="search-box" placeholder="Search for a word..." onkeyup="filterLibrary()">
+        <input type="text" id="lib-search" class="search-box" placeholder="Quick search..." onkeyup="filterLibrary()">
         <div class="table-container">
             <table id="vocab-table">
                 <thead>
                     <tr>
                         <th>Word</th>
                         <th>POS</th>
+                        <th>Synonyms</th>
                         <th>Phonetic</th>
                         <th>Meaning</th>
                         <th>Example</th>
-                        <th>Synonyms</th>
                     </tr>
                 </thead>
-                <tbody id="lib-body">
-                    </tbody>
+                <tbody id="lib-body"></tbody>
             </table>
         </div>
         <button class="secondary-btn" onclick="showScreen('home-screen')">BACK TO MENU</button>
@@ -73,6 +72,7 @@
 
     <div id="upload-screen" class="card hidden">
         <h2>Update Library</h2>
+        <p style="font-size:0.8rem; color:var(--secondary-text);">Headers: <b>word, pos, synonyms, phonetic, meaning, example</b></p>
         <input type="file" id="file-input" accept=".xlsx, .xls" />
         <p id="upload-msg" style="font-size:0.8rem; color:var(--success); font-weight:bold;"></p>
         <button class="secondary-btn" onclick="showScreen('home-screen')">BACK</button>
@@ -93,28 +93,28 @@
                 <div id="display-meaning" class="meaning-hint"></div>
             </div>
             <button class="secondary-btn" onclick="playAudio()">🔊 HEAR ANSWER</button>
-            <input type="text" id="answer-input" placeholder="Type here..." autocomplete="off">
+            <input type="text" id="answer-input" placeholder="Type answer..." autocomplete="off">
             <button class="action-btn" onclick="checkAnswer()">CHECK</button>
         </div>
         <div id="review-area" class="hidden">
-            <div id="feedback-msg" style="text-align:center; font-weight:800; font-size:1.2rem; margin-bottom:10px;"></div>
+            <div id="feedback-msg" style="text-align:center; font-weight:800; font-size:1.2rem; margin-bottom:15px;"></div>
             <div style="text-align:center;">
                 <span id="res-word" class="review-word"></span>
                 <span id="res-pos" class="review-pos"></span>
-                <span id="res-phonetic" class="review-phonetic"></span>
+                <span id="res-phonetic" style="display:block; color:var(--error); font-weight:600; margin-bottom:10px;"></span>
             </div>
-            <div style="font-size: 0.95rem; line-height: 1.5;">
+            <div style="font-size: 0.95rem; line-height: 1.6;">
+                <p><strong>Synonyms:</strong> <span id="res-synonyms" class="review-syn-highlight"></span></p>
                 <p><strong>Meaning:</strong> <span id="res-meaning"></span></p>
                 <p><strong>Example:</strong> <span id="res-example"></span></p>
-                <p><strong>Synonyms:</strong> <span id="res-synonyms"></span></p>
             </div>
             <button class="action-btn" id="continue-btn" onclick="handleContinue()" style="background:var(--success);">CONTINUE</button>
         </div>
     </div>
 
     <script>
-        const DB_KEY = 'ielts_db_v11';
-        const HIST_KEY = 'ielts_hist_v11';
+        const DB_KEY = 'ielts_db_v14';
+        const HIST_KEY = 'ielts_hist_v14';
         let currentQueue = [];
         let isReviewing = false;
 
@@ -127,26 +127,20 @@
         function updateHomeStats() {
             let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
             let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "[]");
-            document.getElementById('status-bar').innerHTML = `<b>Library:</b> ${db.length} words | <b>Mastered:</b> ${hist.length}`;
+            document.getElementById('status-bar').innerHTML = `<b>Library:</b> ${db.length} | <b>Mastered:</b> ${hist.length}`;
         }
 
-        // --- LIBRARY LOGIC ---
         function openLibrary() {
             let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
             const libBody = document.getElementById('lib-body');
-            libBody.innerHTML = "";
-
-            db.forEach(item => {
-                let row = `<tr>
-                    <td><b>${item.word || ""}</b></td>
-                    <td><i>${item.pos || ""}</i></td>
-                    <td style="color:var(--error)">${item.phonetic || ""}</td>
-                    <td>${item.meaning || ""}</td>
-                    <td style="font-size:0.75rem">${item.example || ""}</td>
-                    <td style="color:var(--primary)">${item.synonyms || ""}</td>
-                </tr>`;
-                libBody.innerHTML += row;
-            });
+            libBody.innerHTML = db.map(i => `<tr>
+                <td><b>${i.word||""}</b></td>
+                <td><i>${i.pos||""}</i></td>
+                <td style="color:var(--primary); font-weight:600;">${i.synonyms||""}</td>
+                <td style="color:var(--error)">${i.phonetic||""}</td>
+                <td>${i.meaning||""}</td>
+                <td style="font-size:0.75rem">${i.example||""}</td>
+            </tr>`).join('');
             showScreen('library-screen');
         }
 
@@ -154,12 +148,10 @@
             let input = document.getElementById("lib-search").value.toLowerCase();
             let rows = document.getElementById("lib-body").getElementsByTagName("tr");
             for (let row of rows) {
-                let text = row.textContent.toLowerCase();
-                row.style.display = text.includes(input) ? "" : "none";
+                row.style.display = row.textContent.toLowerCase().includes(input) ? "" : "none";
             }
         }
 
-        // --- UPLOAD LOGIC ---
         document.getElementById('file-input').addEventListener('change', function(e) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -174,25 +166,19 @@
                     }
                 });
                 localStorage.setItem(DB_KEY, JSON.stringify(db));
-                document.getElementById('upload-msg').innerText = `Added ${added} new words.`;
+                document.getElementById('upload-msg').innerText = `Added ${added} words. Total: ${db.length}`;
+                updateHomeStats();
             };
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        // --- STUDY LOGIC ---
         function startStudy() {
             let db = JSON.parse(localStorage.getItem(DB_KEY) || "[]");
             if (db.length === 0) return;
             let hist = JSON.parse(localStorage.getItem(HIST_KEY) || "[]");
             let limit = parseInt(document.getElementById('session-count').value);
-            let newPool = db.filter(w => !hist.includes(w.word.toLowerCase()));
-            let oldPool = db.filter(w => hist.includes(w.word.toLowerCase()));
-            let selected = [...newPool.sort(() => 0.5 - Math.random()).slice(0, Math.ceil(limit * 0.7)),
-                            ...oldPool.sort(() => 0.5 - Math.random()).slice(0, limit - Math.ceil(limit * 0.7))];
-            currentQueue = selected.sort(() => 0.5 - Math.random()).map(w => ({
-                ...w, isNew: !hist.includes(w.word.toLowerCase()),
-                qType: Math.random() > 0.3 ? 'read' : 'audio'
-            }));
+            let pool = db.sort(() => 0.5 - Math.random()).slice(0, limit);
+            currentQueue = pool.map(w => ({...w, isNew: !hist.includes(w.word.toLowerCase()), qType: Math.random() > 0.3 ? 'read' : 'audio'}));
             showScreen('study-screen');
             renderQuestion();
         }
@@ -203,11 +189,10 @@
             document.getElementById('q-area').classList.remove('hidden');
             document.getElementById('review-area').classList.add('hidden');
             document.getElementById('answer-input').value = ""; document.getElementById('answer-input').focus();
-            document.getElementById('type-badge').innerHTML = cur.isNew ? 
-                '<span class="badge badge-new">NEW</span>' : '<span class="badge badge-review">REVIEW</span>';
+            document.getElementById('type-badge').innerHTML = cur.isNew ? '<span class="badge badge-new">NEW</span>' : '<span class="badge badge-review">REVIEW</span>';
             if (cur.qType === 'audio') {
                 document.getElementById('display-synonym').innerText = "???";
-                document.getElementById('display-meaning').innerText = "Listen to identify the term";
+                document.getElementById('display-meaning').innerText = "Listen to answer";
                 playAudio();
             } else {
                 document.getElementById('display-synonym').innerText = cur.synonyms || cur.meaning;
@@ -226,20 +211,15 @@
             document.getElementById('res-phonetic').innerText = cur.phonetic || "";
             document.getElementById('res-meaning').innerText = cur.meaning;
             document.getElementById('res-example').innerText = cur.example || "";
-            document.getElementById('res-synonyms').innerText = cur.synonyms || "";
+            document.getElementById('res-synonyms').innerText = cur.synonyms || "N/A";
             let fb = document.getElementById('feedback-msg');
             if (ans === cur.word.toLowerCase()) {
                 fb.innerText = "CORRECT! ✅"; fb.style.color = "var(--success)";
-                cur.ok = true; saveHist(cur.word);
-            } else {
-                fb.innerText = "WRONG! ❌"; fb.style.color = "var(--error)";
-                cur.ok = false;
-            }
-        }
-
-        function saveHist(w) {
-            let h = JSON.parse(localStorage.getItem(HIST_KEY) || "[]");
-            if (!h.includes(w.toLowerCase())) { h.push(w.toLowerCase()); localStorage.setItem(HIST_KEY, JSON.stringify(h)); }
+                let h = JSON.parse(localStorage.getItem(HIST_KEY) || "[]");
+                if(!h.includes(cur.word.toLowerCase())) { h.push(cur.word.toLowerCase()); localStorage.setItem(HIST_KEY, JSON.stringify(h)); }
+                cur.ok = true;
+            } else { fb.innerText = "WRONG! ❌"; fb.style.color = "var(--error)"; cur.ok = false; }
+            document.getElementById('continue-btn').focus();
         }
 
         function handleContinue() {
@@ -247,15 +227,8 @@
             if (currentQueue.length === 0) showScreen('home-screen'); else renderQuestion();
         }
 
-        function playAudio() {
-            window.speechSynthesis.cancel();
-            let m = new SpeechSynthesisUtterance(currentQueue[0].word); m.lang = 'en-US'; window.speechSynthesis.speak(m);
-        }
-
-        function clearHistory() {
-            if(confirm("Clear progress and library?")) { localStorage.clear(); location.reload(); }
-        }
-
+        function playAudio() { window.speechSynthesis.cancel(); let m = new SpeechSynthesisUtterance(currentQueue[0].word); m.lang = 'en-US'; window.speechSynthesis.speak(m); }
+        function clearHistory() { if(confirm("Reset progress and library?")) { localStorage.clear(); location.reload(); } }
         document.getElementById('answer-input').addEventListener('keypress', (e) => { if(e.key==='Enter' && !isReviewing) checkAnswer(); });
         window.addEventListener('keypress', (e) => { if(e.key==='Enter' && isReviewing) handleContinue(); });
         updateHomeStats();
